@@ -1,8 +1,8 @@
 import { NftsList } from '../../components/nft/Nfts';
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 import { Body2, Label2 } from '../../components/Text';
 import { Button } from '../../components/fields/Button';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { AppRoute, WalletSettingsRoute } from '../../libs/routes';
 import { useTranslation } from '../../hooks/translation';
 import {
@@ -15,6 +15,8 @@ import { useMemo } from 'react';
 import { SlidersIcon } from '../../components/Icon';
 import { IconButtonTransparentBackground } from '../../components/fields/IconButton';
 import { useWalletFilteredNftList } from '../../state/nft';
+import { useNavigate } from '../../hooks/router/useNavigate';
+import { useAppTargetEnv } from '../../hooks/appSdk';
 
 const gap = '10px';
 const maxColumnsNumber = 4;
@@ -38,6 +40,13 @@ const NFTEmptyPage = styled.div`
     display: flex;
     align-items: center;
     justify-content: center;
+
+    ${p =>
+        p.theme.proDisplayType === 'mobile' &&
+        css`
+            height: unset;
+            flex: 1;
+        `}
 `;
 
 const NFTPageBody = styled.div`
@@ -70,6 +79,17 @@ const SettingsButtonStyled = styled(IconButtonTransparentBackground)`
     margin-left: auto;
 `;
 
+const DesktopViewPageLayoutStyled = styled(DesktopViewPageLayout)`
+    height: 100%;
+
+    ${p =>
+        p.theme.proDisplayType === 'mobile' &&
+        css`
+            display: flex;
+            flex-direction: column;
+        `}
+`;
+
 export const DesktopCollectables = () => {
     return <DesktopCollectablesContent />;
 };
@@ -78,6 +98,7 @@ export const DesktopCollectablesContent = () => {
     const { data: nfts } = useWalletFilteredNftList();
     const { t } = useTranslation();
     const navigate = useNavigate();
+    const env = useAppTargetEnv();
 
     const { ref: scrollRef, closeTop } = useIsScrolled();
 
@@ -97,21 +118,28 @@ export const DesktopCollectablesContent = () => {
 
     if (!filteredNft.length) {
         return (
-            <NFTEmptyPage>
-                <NFTEmptyContainer>
-                    <Label2>{t('collectibles_empty_header')}</Label2>
-                    <Body2>{t('nft_empty_description')}</Body2>
-                    <LinkStyled to={AppRoute.browser}>
-                        <Button size="small">{t('nft_empty_go_discover_button')}</Button>
-                    </LinkStyled>
-                </NFTEmptyContainer>
-            </NFTEmptyPage>
+            <DesktopViewPageLayoutStyled>
+                {env === 'mobile' && (
+                    <DesktopViewHeader borderBottom={!closeTop} backButton={true}>
+                        <Label2>{t('wallet_aside_collectibles')}</Label2>
+                    </DesktopViewHeader>
+                )}
+                <NFTEmptyPage>
+                    <NFTEmptyContainer>
+                        <Label2>{t('collectibles_empty_header')}</Label2>
+                        <Body2>{t('nft_empty_description')}</Body2>
+                        <LinkStyled to={AppRoute.browser}>
+                            <Button size="small">{t('nft_empty_go_discover_button')}</Button>
+                        </LinkStyled>
+                    </NFTEmptyContainer>
+                </NFTEmptyPage>
+            </DesktopViewPageLayoutStyled>
         );
     }
 
     return (
         <DesktopViewPageLayout ref={scrollRef}>
-            <DesktopViewHeader borderBottom={!closeTop}>
+            <DesktopViewHeader borderBottom={!closeTop} backButton={env === 'mobile'}>
                 <Label2>{t('wallet_aside_collectibles')}</Label2>
                 <SettingsButtonStyled
                     onClick={() => navigate(AppRoute.walletSettings + WalletSettingsRoute.nft)}

@@ -19,8 +19,9 @@ import { useAssetsDistribution } from '../../state/asset';
 import { TronAssets } from '../../components/home/TronAssets';
 import { useActiveTronWallet, useCanUseTronForActiveWallet } from '../../state/tron/tron';
 import { TON_ASSET } from '@tonkeeper/core/dist/entries/crypto/asset/constants';
+import { useAppTargetEnv } from '../../hooks/appSdk';
 
-const DesktopAssetStylesOverride = css`
+export const DesktopAssetStylesOverride = css`
     background-color: transparent;
     transition: background-color 0.15s ease-in-out;
     border-radius: 0;
@@ -48,9 +49,12 @@ const AnyChainAssetStyled = styled(AnyChainAsset)`
 
 const TokensHeaderContainer = styled(DesktopViewHeader)`
     flex-shrink: 0;
-    justify-content: space-between;
     border-bottom: 1px solid ${p => p.theme.separatorCommon};
     padding-right: 0;
+
+    > *:nth-child(3) {
+        margin-left: auto;
+    }
 `;
 
 const TokensPageBody = styled.div`
@@ -78,8 +82,6 @@ const Divider = styled.div`
     margin: 0 -16px;
     width: calc(100% + 32px);
 `;
-
-const itemSize = 77;
 
 const DesktopTokensPayload = () => {
     const { assets: allAssets } = useAllChainsAssets() ?? [];
@@ -113,6 +115,10 @@ const DesktopTokensPayload = () => {
         setShowChart(!showChart);
     };
 
+    const env = useAppTargetEnv();
+    const itemSize = env === 'mobile' ? 61 : 77;
+    const chartSize = env === 'mobile' ? 388 : 192;
+
     const virtualScrollPaddingBase = canUseTron && !tronWallet ? 2 * itemSize : itemSize;
 
     const rowVirtualizer = useVirtualizer({
@@ -121,7 +127,9 @@ const DesktopTokensPayload = () => {
         estimateSize: () => itemSize,
         getItemKey: index => assets![index].asset.id,
         paddingStart:
-            canShowChart && showChart ? 192 + virtualScrollPaddingBase : virtualScrollPaddingBase
+            canShowChart && showChart
+                ? chartSize + virtualScrollPaddingBase
+                : virtualScrollPaddingBase
     });
 
     const onTokenClick = useCallback(
@@ -146,7 +154,7 @@ const DesktopTokensPayload = () => {
 
     return (
         <DesktopViewPageLayout ref={containerRef}>
-            <TokensHeaderContainer>
+            <TokensHeaderContainer backButton={env === 'mobile'}>
                 <Label2>{t('jettons_list_title')}</Label2>
                 {canShowChart && (
                     <HideButton onClick={onToggleChart}>

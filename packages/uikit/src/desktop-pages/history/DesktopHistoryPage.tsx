@@ -1,5 +1,5 @@
 import { FC, Suspense, useRef } from 'react';
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 import { ActivitySkeletonPage } from '../../components/Skeleton';
 import { useFetchNext } from '../../hooks/useFetchNext';
 import EmptyActivity from '../../components/activity/EmptyActivity';
@@ -19,6 +19,8 @@ import {
     AssetHistoryFilter,
     OtherHistoryFilters
 } from '../../components/desktop/history/DesktopHistoryFilters';
+import { ErrorBoundary } from 'react-error-boundary';
+import { fallbackRenderOver } from '../../components/Error';
 
 const HistoryPageWrapper = styled(DesktopViewPageLayout)`
     overflow: auto;
@@ -26,9 +28,14 @@ const HistoryPageWrapper = styled(DesktopViewPageLayout)`
 `;
 
 const HistoryContainer = styled.div`
-    overflow-x: auto;
-    overflow-y: hidden;
     min-height: calc(100% - 53px);
+
+    ${p =>
+        p.theme.proDisplayType === 'desktop' &&
+        css`
+            overflow-x: auto;
+            overflow-y: hidden;
+        `}
 `;
 
 const HistoryHeaderContainer = styled(DesktopViewHeader)`
@@ -71,7 +78,23 @@ const LoaderContainer = styled.div`
     }
 `;
 
-export const DesktopHistoryPage: FC = () => {
+export const DesktopHistoryPage = () => {
+    return (
+        <ErrorBoundary fallbackRender={fallbackRenderOver('Failed to display history page')}>
+            <DesktopHistoryPageContent />
+        </ErrorBoundary>
+    );
+};
+
+const DesktopViewPageLayoutStyled = styled(DesktopViewPageLayout)`
+    height: 100%;
+
+    > * {
+        height: 100%;
+    }
+`;
+
+const DesktopHistoryPageContent: FC = () => {
     const wallet = useActiveWallet();
     const sdk = useAppSdk();
     const config = useActiveConfig();
@@ -124,7 +147,9 @@ export const DesktopHistoryPage: FC = () => {
     if (activity?.length === 0) {
         return (
             <Suspense fallback={<ActivitySkeletonPage />}>
-                <EmptyActivity />
+                <DesktopViewPageLayoutStyled>
+                    <EmptyActivity />
+                </DesktopViewPageLayoutStyled>
             </Suspense>
         );
     }
